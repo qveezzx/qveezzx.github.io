@@ -1051,12 +1051,20 @@
       try {
         const res = await fetch('https://api.github.com/repos/qveezzx/archiso/releases/latest');
         const data = await res.json();
-        const asset = data.assets.find(a => a.name.endsWith(extension));
+        
+        // Find the asset. If it's an ISO, specifically look for one starting with 'zuccos-'
+        const asset = data.assets.find(a => {
+          if (extension === '.iso') {
+            return a.name.startsWith('zuccos-') && a.name.endsWith('.iso');
+          }
+          return a.name.endsWith(extension);
+        });
+
         if (asset) {
           window.location.href = asset.browser_download_url;
           closeDownloadWarning();
         } else {
-          alert(`File with ${extension} not found in the latest build.`);
+          alert(`Latest ${extension === '.iso' ? 'ZuccOS ISO' : extension} not found in the latest build.`);
         }
       } catch (e) {
         alert('Error fetching latest release. Please try again later.');
