@@ -628,7 +628,7 @@
           Download ISO
         </button>
         <a href="https://github.com/qveezzx/archiso" class="btn-ghost" target="_blank" rel="noopener">
-          <i data-lucide="git-branch" style="width:14px;height:14px;"></i>
+          <i data-lucide="github" style="width:14px;height:14px;"></i>
           View source
         </a>
       </div>
@@ -756,7 +756,7 @@
       <ul class="modal-list">
         <li>
           <i data-lucide="git-branch" style="width:14px;height:14px;"></i>
-          <span>Check the <a href="https://github.com/qveezzx/archiso/issues" target="_blank" rel="noopener">Issues tab</a> for known problems with the current build.</span>
+          <span>Check the <a href="https://github.com/qveezzx/archiso/issues" target="_blank" rel="noopener" class="whitespace-nowrap" style="color:var(--accent); border-bottom: 1px solid var(--accent-border);">Issues tab</a> for known problems with the current build.</span>
         </li>
         <li>
           <i data-lucide="file-text" style="width:14px;height:14px;"></i>
@@ -829,28 +829,29 @@ async function fetchAsset(extension) {
   try {
     const res = await fetch('https://api.github.com/repos/qveezzx/archiso/releases/latest');
     const data = await res.json();
-    const asset = data.assets.find(a => a.name.endsWith(extension));
+    
+    // Find the asset. If it's an ISO, specifically look for one starting with 'zuccos-'
+    const asset = data.assets.find(a => {
+      if (extension === '.iso') {
+        return a.name.startsWith('zuccos-') && a.name.endsWith('.iso');
+      }
+      return a.name.endsWith(extension);
+    });
 
     if (asset) {
       if (extension === 'build.log') {
-        // 1. Fetch the file content
-        const fileRes = await fetch(asset.browser_download_url);
-        const blob = await fileRes.blob();
-        
-        // 2. Create a "fake" URL that the browser treats as plain text
-        const textBlob = new Blob([blob], { type: 'text/plain' });
-        const viewUrl = URL.createObjectURL(textBlob);
-        
-        // 3. Open that URL in a new tab
-        window.open(viewUrl, '_blank');
+        // Direct download for logs to avoid CORS issues in the browser
+        window.open(asset.browser_download_url, '_blank');
       } else {
         // Standard download for the .iso
         window.location.href = asset.browser_download_url;
         closeDownloadWarning();
       }
+    } else {
+      alert(`Latest ${extension === '.iso' ? 'ZuccOS ISO' : extension} not found in the latest build.`);
     }
   } catch (e) {
-    alert('Error fetching asset.');
+    alert('Error fetching assets. Please try again later.');
   }
 }
 
